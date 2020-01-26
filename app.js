@@ -3,6 +3,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const ejs = require('ejs');
 const mongoose = require('mongoose');
+const encrypt = require('mongoose-encryption');
 const app = express();
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static('public'));
@@ -14,10 +15,12 @@ mongoose.connect('mongodb://localhost/secretDB', {
 	useCreateIndex: true,
 	useUnifiedTopology: true
 });
-const userSchema = {
+const userSchema = new mongoose.Schema({
 	email: String,
 	password: String
-};
+});
+const secret = 'secretword';
+userSchema.plugin(encrypt, { secret: secret, encryptedFields: [ 'password' ] });
 const User = mongoose.model('user', userSchema);
 
 app.get('/', (req, res) => {
@@ -44,7 +47,7 @@ app.post('/register', async (req, res) => {
 app.post('/login', async (req, res) => {
 	try {
 		const user = await User.findOne({ email: req.body.username });
-		console.log(user);
+
 		if (user) {
 			if (user.password === req.body.password) {
 				res.render('secrets');
